@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FredFix Chat</title>
+</head>
+<body>
+    <h1>FredFix Chat</h1>
+    <form id="chat-form">
+        <label for="message">Enter your message:</label><br>
+        <input type="text" id="message" name="message" required><br><br>
+        <button type="submit">Send</button>
+    </form>
+    <button id="reset-chat">Reset Chat</button>
+    <div id="chat-history"></div>
+
+    <h2>Upload File</h2>
+    <form id="upload-form" enctype="multipart/form-data">
+        <label for="file">Choose a file:</label><br>
+        <input type="file" id="file" name="file" required><br><br>
+        <button type="submit">Upload</button>
+    </form>
+    <div id="upload-result"></div>
+
+    <script>
+        document.getElementById("chat-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const message = document.getElementById("message").value;
+
+            const formData = new FormData();
+            formData.append("message", message);
+
+            const response = await fetch("/chat", {
+                method: "POST",
+                body: formData
+            });
+
+            const resultDiv = document.getElementById("chat-history");
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
+                resultDiv.innerHTML += `<p><strong>Assistant:</strong> ${data.response}</p>`;
+            } else {
+                const error = await response.json();
+                resultDiv.innerHTML += `<p><strong>Error:</strong> ${JSON.stringify(error)}</p>`;
+            }
+        });
+
+        document.getElementById("reset-chat").addEventListener("click", async () => {
+            const response = await fetch("/reset", { method: "POST" });
+            if (response.ok) {
+                document.getElementById("chat-history").innerHTML = "<p>Chat history reset.</p>";
+            }
+        });
+
+        document.getElementById("upload-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const fileInput = document.getElementById("file");
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            const response = await fetch("/upload", {
+                method: "POST",
+                body: formData
+            });
+
+            const resultDiv = document.getElementById("upload-result");
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML = `<h3>Analysis of ${data.filename}:</h3><pre>${data.analysis}</pre>`;
+            } else {
+                const error = await response.json();
+                resultDiv.innerHTML = `<p><strong>Error:</strong> ${JSON.stringify(error)}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
